@@ -1,5 +1,6 @@
 from flask import g, render_template, request, Markup
 
+import htmlfilter
 from login import requirelogin
 from zoodb import *
 from debug import *
@@ -20,14 +21,12 @@ def users():
             if p.startswith("#!python"):
                 p = run_profile(user)
 
-            p_markup = Markup("<b>%s</b>" % p)
+            p_markup = Markup(htmlfilter.filter_html(p))
             args['profile'] = p_markup
 
             args['user'] = user
             args['user_zoobars'] = bank.balance(user.username)
-            args['transfers'] = transferdb.query(Transfer).filter(
-                                    or_(Transfer.sender==user.username,
-                                        Transfer.recipient==user.username))
+            args['transfers'] = bank.get_log(user.username)
         else:
             args['warning'] = "Cannot find that user."
     return render_template('users.html', **args)
